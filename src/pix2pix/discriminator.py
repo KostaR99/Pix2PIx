@@ -20,7 +20,7 @@ class Discriminator(nn.Module):
 
     def __weights_init(self, m, mean=0.0, std=0.02):
         if isinstance(m, DownBlock):
-            torch.nn.init.normal_(m.conv.weight, mean, std)
+            nn.init.normal_(m.conv.weight, mean, std)
 
     def normal_weight_init(self):
         self.model.apply(self.__weights_init)

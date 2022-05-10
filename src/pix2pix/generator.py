@@ -50,9 +50,9 @@ class Generator(nn.Module):
     def normal_weight_init(self, mean=0.0, std=0.02):
         for m in self.children():
             if isinstance(m, DownBlock):
-                torch.nn.init.normal_(m.conv.weight, mean, std)
+                nn.init.normal_(m.conv.weight, mean, std)
             if isinstance(m, UpBlock):
-                torch.nn.init.normal_(m.conv.weight, mean, std)
+                nn.init.normal_(m.conv.weight, mean, std)
 
 if __name__ == "__main__":
     x = torch.randn((1, 3, 256, 256))
