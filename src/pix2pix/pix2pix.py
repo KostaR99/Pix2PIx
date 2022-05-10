@@ -137,6 +137,7 @@ class Pix2Pix:
         self.discriminator.to(DEVICE)
 
         for epoch in range(NUM_EPOCHS):
+            print(f"Epoch {epoch}")
             self.__train_step(data=train_loader)
 
             if epoch % 10 == 0:
