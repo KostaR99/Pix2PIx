@@ -11,7 +11,7 @@ class Discriminator(nn.Module):
             DownBlock(out_channels=128),
             DownBlock(256),
             DownBlock(512, last_layer=True),
-            nn.LazyConv2d(1, kernel_size=4, padding=1, padding_mode="zeros")
+            nn.LazyConv2d(1, kernel_size=4, padding=1)
         )
 
     def forward(self, x, y):

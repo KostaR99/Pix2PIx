@@ -5,7 +5,6 @@ from PIL import Image
 from tqdm import tqdm
 import torch
 from torch.utils.data import Dataset, DataLoader
-from torch.cuda.amp import autocast
 import torch.nn as nn
 from pix2pix.constants import BATCH_SIZE, DEVICE, L1_LAMBDA, NUM_EPOCHS, NUM_WORKERS
 from pix2pix.discriminator import Discriminator
@@ -23,21 +22,20 @@ class Pix2Pix:
         self.d_scaler = None
         self.g_scaler = None
 
-    def compile(self, discriminator_opt, generator_opt, d_scaler, g_scaler):
+    def compile(self, discriminator_opt, generator_opt):
 
         self.discriminator_opt = discriminator_opt
         self.generator_opt = generator_opt
-        self.d_scaler = d_scaler
-        self.g_scaler = g_scaler
 
     def __save_checkpoint(self, model, checkpoint_name: str):
         print("Saving the checkpoint...")
         os.makedirs("./checkpoints", exist_ok=True)
         checkpoint_path = os.path.join("./checkpoints", checkpoint_name)
         torch.save(model.state_dict(), checkpoint_path)
-        print(f"Saved!: Checkpoint path is: {checkpoint_path}")
+        print(f"Saved! Checkpoint path is: {checkpoint_path}")
 
     def __save_some_exapmles(self, data_loader, current_epoch):
+        print("Saving examples...")
         self.generator.eval()
 
         os.makedirs("./results", exist_ok=True)
@@ -59,6 +57,7 @@ class Pix2Pix:
                 image = Image.fromarray((res * 255).astype(np.uint8))
                 image.save(f"./results/epoch_{current_epoch}_{idx}.png")
         self.generator.train()
+        print("Saved!")
 
     def __train_step(self, data):
         discriminator_losses = []
@@ -67,28 +66,25 @@ class Pix2Pix:
         for _, (x, y) in enumerate(loop):
             x, y = x.to(DEVICE), y.to(DEVICE)
             # train discriminator
-            with autocast():
-                y_fake = self.generator(x)
-                D_real = self.discriminator(x, y)
-                D_fake = self.discriminator(x, y_fake.detach())
+            y_fake = self.generator(x)
+            D_real = self.discriminator(x, y)
+            D_fake = self.discriminator(x, y_fake.detach())
 
-                D_real_loss = self.bce(D_real, torch.ones_like(D_real))
-                D_fake_loss = self.bce(D_fake, torch.ones_like(D_fake))
+            D_real_loss = self.bce(D_real, torch.ones_like(D_real))
+            D_fake_loss = self.bce(D_fake, torch.zeros_like(D_fake))
 
-                D_loss = (D_real_loss + D_fake_loss) / 2
+            D_loss = (D_real_loss + D_fake_loss) / 2
 
             discriminator_losses.append(D_loss)
             self.discriminator_opt.zero_grad()
-            self.d_scaler.scale(D_loss).backward()
-            self.d_scaler.step(self.discriminator_opt)
-            self.d_scaler.update()
+            D_loss.backward()
+            self.discriminator_opt.step()
 
             # train generator
-            with autocast():
-                D_fake = self.discriminator(x, y_fake)
-                G_loss = self.bce(D_fake, torch.ones_like(D_fake))
-                l1_loss = self.l1(y_fake, y) * L1_LAMBDA
-                G_loss += l1_loss
+            D_fake = self.discriminator(x, y_fake)
+            G_loss = self.bce(D_fake, torch.ones_like(D_fake))
+            l1_loss = self.l1(y_fake, y) * L1_LAMBDA
+            G_loss += l1_loss
 
             generator_losses.append(G_loss)
             self.generator_opt.zero_grad()
