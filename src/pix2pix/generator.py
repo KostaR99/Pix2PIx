@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from layers import DownBlock, UpBlock
+from pix2pix.layers import DownBlock, UpBlock
 # Encoder:
 # C64-C128-C256-C512-C512-C512-C512-C512
 # Decoder:

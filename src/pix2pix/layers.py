@@ -10,6 +10,7 @@ class DownBlock(nn.Module):
             kernel_size=4,
             stride=2 if not last_layer else 1,
             padding=1,
+            padding_mode="reflect",
             bias=False if use_norm else True)
         self.use_norm = use_norm
         self.norm = nn.LazyInstanceNorm2d()

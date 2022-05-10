@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from layers import DownBlock
+from pix2pix.layers import DownBlock
 
 # C64-C128-C256-C512
 class Discriminator(nn.Module):
@@ -11,7 +11,7 @@ class Discriminator(nn.Module):
             DownBlock(out_channels=128),
             DownBlock(256),
             DownBlock(512, last_layer=True),
-            nn.LazyConv2d(1, kernel_size=4, padding=1)
+            nn.LazyConv2d(1, kernel_size=4, padding=1, padding_mode="zeros")
         )
 
     def forward(self, x, y):
